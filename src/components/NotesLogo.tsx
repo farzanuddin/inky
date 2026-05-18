@@ -4,6 +4,8 @@ interface NotesLogoProps {
   variant?: "default" | "sidebar";
 }
 
+const logoUrl = `${import.meta.env.BASE_URL}logo.svg`;
+
 export function NotesLogo({
   className,
   showName = true,
@@ -22,8 +24,8 @@ export function NotesLogo({
         className="logo-mark h-8 w-8 shrink-0 justify-self-center bg-primary"
         aria-hidden="true"
         style={{
-          mask: "url('/logo.svg') center / contain no-repeat",
-          WebkitMask: "url('/logo.svg') center / contain no-repeat",
+          mask: `url('${logoUrl}') center / contain no-repeat`,
+          WebkitMask: `url('${logoUrl}') center / contain no-repeat`,
         }}
       />
       {showName && (

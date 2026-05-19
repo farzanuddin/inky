@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Home, Search, Archive, Tags, Settings, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { ActiveView } from "@/types";
 
 interface MobileBottomNavProps {
-  activeView: "all" | "archived";
-  onViewChange: (view: "all" | "archived") => void;
+  activeView: ActiveView;
+  onViewChange: (view: ActiveView) => void;
   onOpenSearch: () => void;
   onCreateNote: () => void;
   onOpenTags: () => void;
@@ -25,7 +26,6 @@ export function MobileBottomNav({
       role="navigation"
       aria-label="Mobile navigation"
     >
-      {/* Mobile: icon-only compact bar */}
       <div className="flex md:hidden items-center justify-around h-12 px-1">
         <Button
           variant="ghost"
@@ -93,7 +93,6 @@ export function MobileBottomNav({
         </Button>
       </div>
 
-      {/* Tablet: icons + labels */}
       <div className="hidden md:flex items-center justify-around h-14 px-1">
         <Button
           variant="ghost"

@@ -4,6 +4,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 import {
@@ -11,14 +12,24 @@ import {
   TAG_COLOR_OPTIONS,
   type ColorTheme,
   type Note,
+  type NoteFormData,
+  type NoteUpdateData,
 } from "@/types";
+import {
+  addTag,
+  createNoteRecord,
+  deleteNoteById,
+  removeTag,
+  toggleArchiveById,
+  updateNoteById,
+} from "@/lib/note-state";
 
 function loadNotes(): Note[] {
   try {
     const stored = localStorage.getItem("inky-notes");
     if (stored) return JSON.parse(stored);
   } catch {
-    /* ignore */
+    return [];
   }
   return [];
 }
@@ -34,7 +45,7 @@ function loadTags(): string[] {
       return [...JSON.parse(stored)].sort((a, b) => a.localeCompare(b));
     }
   } catch {
-    /* ignore */
+    return [...DEFAULT_TAGS].sort((a, b) => a.localeCompare(b));
   }
   return [...DEFAULT_TAGS].sort((a, b) => a.localeCompare(b));
 }
@@ -55,7 +66,7 @@ function loadTagColors(): Record<string, ColorTheme> {
     const stored = localStorage.getItem("inky-tag-colors");
     if (stored) return { ...defaultTagColors(), ...JSON.parse(stored) };
   } catch {
-    /* ignore */
+    return defaultTagColors();
   }
   return defaultTagColors();
 }
@@ -68,16 +79,12 @@ interface NotesContextValue {
   notes: Note[];
   tags: string[];
   tagColors: Record<string, ColorTheme>;
-  createNote: (data: Pick<Note, "title" | "content" | "tags">) => Note;
-  updateNote: (
-    id: string,
-    data: Partial<Pick<Note, "title" | "content" | "tags">>,
-  ) => void;
+  createNote: (data: NoteFormData) => Note;
+  updateNote: (id: string, data: NoteUpdateData) => void;
   deleteNote: (id: string) => void;
   toggleArchive: (id: string) => void;
   createTag: (tag: string, color?: ColorTheme) => boolean;
   deleteTag: (tag: string) => void;
-  updateTagColor: (tag: string, color: ColorTheme) => void;
 }
 
 const NotesContext = createContext<NotesContextValue | null>(null);
@@ -103,17 +110,9 @@ export function NotesProvider({ children }: { children: ReactNode }) {
   }, [tagColors]);
 
   const createNote = useCallback(
-    (data: Pick<Note, "title" | "content" | "tags">) => {
+    (data: NoteFormData) => {
       const now = new Date().toISOString();
-      const note: Note = {
-        id: String(++idCounter),
-        title: data.title,
-        content: data.content,
-        tags: data.tags,
-        archived: false,
-        createdAt: now,
-        updatedAt: now,
-      };
+      const note = createNoteRecord(data, String(++idCounter), now);
       setNotes((prev) => [note, ...prev]);
       return note;
     },
@@ -121,90 +120,71 @@ export function NotesProvider({ children }: { children: ReactNode }) {
   );
 
   const updateNote = useCallback(
-    (id: string, data: Partial<Pick<Note, "title" | "content" | "tags">>) => {
+    (id: string, data: NoteUpdateData) => {
       setNotes((prev) =>
-        prev.map((n) =>
-          n.id === id
-            ? { ...n, ...data, updatedAt: new Date().toISOString() }
-            : n,
-        ),
+        updateNoteById(prev, id, data, new Date().toISOString()),
       );
     },
     [],
   );
 
   const deleteNote = useCallback((id: string) => {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+    setNotes((prev) => deleteNoteById(prev, id));
   }, []);
 
   const toggleArchive = useCallback((id: string) => {
     setNotes((prev) =>
-      prev.map((n) =>
-        n.id === id
-          ? { ...n, archived: !n.archived, updatedAt: new Date().toISOString() }
-          : n,
-      ),
+      toggleArchiveById(prev, id, new Date().toISOString()),
     );
   }, []);
 
   const createTag = useCallback(
     (tag: string, color: ColorTheme = "blue") => {
-      const nextTag = tag.trim();
-      if (!nextTag) return false;
-      if (
-        tags.some(
-          (existing) => existing.toLowerCase() === nextTag.toLowerCase(),
-        )
-      ) {
-        return false;
-      }
+      const next = addTag(tags, tagColors, tag, color);
+      if (!next) return false;
 
-      setTags((prev) => [...prev, nextTag].sort((a, b) => a.localeCompare(b)));
-      setTagColors((prev) => ({ ...prev, [nextTag]: color }));
+      setTags(next.tags);
+      setTagColors(next.tagColors);
       return true;
     },
-    [tags],
+    [tagColors, tags],
   );
 
   const deleteTag = useCallback((tag: string) => {
-    setTags((prev) => prev.filter((existing) => existing !== tag));
-    setTagColors((prev) => {
-      const next = { ...prev };
-      delete next[tag];
-      return next;
-    });
-    setNotes((prev) =>
-      prev.map((note) =>
-        note.tags.includes(tag)
-          ? {
-              ...note,
-              tags: note.tags.filter((existing) => existing !== tag),
-              updatedAt: new Date().toISOString(),
-            }
-          : note,
-      ),
-    );
-  }, []);
+    const timestamp = new Date().toISOString();
+    const next = removeTag(notes, tags, tagColors, tag, timestamp);
+    setTags(next.tags);
+    setTagColors(next.tagColors);
+    setNotes(next.notes);
+  }, [notes, tagColors, tags]);
 
-  const updateTagColor = useCallback((tag: string, color: ColorTheme) => {
-    setTagColors((prev) => ({ ...prev, [tag]: color }));
-  }, []);
+  const value = useMemo(
+    () => ({
+      notes,
+      tags,
+      tagColors,
+      createNote,
+      updateNote,
+      deleteNote,
+      toggleArchive,
+      createTag,
+      deleteTag,
+    }),
+    [
+      notes,
+      tags,
+      tagColors,
+      createNote,
+      updateNote,
+      deleteNote,
+      toggleArchive,
+      createTag,
+      deleteTag,
+    ],
+  );
 
   return (
-    <NotesContext.Provider
-      value={{
-        notes,
-        tags,
-        tagColors,
-        createNote,
-        updateNote,
-        deleteNote,
-        toggleArchive,
-        createTag,
-        deleteTag,
-        updateTagColor,
-      }}
-    >
+    <NotesContext.Provider value={value}>
       {children}
     </NotesContext.Provider>
   );

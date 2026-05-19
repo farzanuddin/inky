@@ -1,7 +1,7 @@
-import type { Note } from "../types.ts";
+import type { ActiveView, Note } from "../types.ts";
 
 interface FilterNotesOptions {
-  activeView: "all" | "archived";
+  activeView: ActiveView;
   selectedTag: string | null;
   searchQuery: string;
 }

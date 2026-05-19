@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { tagColorStyle } from "@/lib/tag-colors";
-import type { ColorTheme, Note } from "@/types";
+import type { ColorTheme, Note, NoteFormData } from "@/types";
 import { Archive, Clock3, Tag, Trash2, X, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -19,7 +19,7 @@ import {
 
 interface NoteEditorProps {
   note: Note | null;
-  onSave: (data: { title: string; content: string; tags: string[] }) => void;
+  onSave: (data: NoteFormData) => void;
   onDelete: (id: string) => void;
   onArchive: (id: string) => void;
   onCancel: () => void;
@@ -97,7 +97,6 @@ export function NoteEditor({
       className="flex h-full flex-1 flex-col bg-background xl:flex-row"
       onKeyDown={handleKeyDown}
     >
-      {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-3 py-2 md:px-5 md:py-3 xl:hidden">
         <div className="flex items-center gap-2 min-w-0">
           {onBack && (
@@ -142,11 +141,9 @@ export function NoteEditor({
         </div>
       </div>
 
-      {/* Form */}
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex-1 overflow-y-auto px-3 py-4 md:px-5 xl:px-6 xl:py-6">
         <div className="flex max-w-3xl flex-col gap-3 md:gap-4">
-          {/* Title */}
           <div>
             <Input
               ref={titleRef}
@@ -174,7 +171,6 @@ export function NoteEditor({
             )}
           </div>
 
-          {/* Tags */}
           <div className="grid max-w-sm grid-cols-[96px_1fr] gap-x-7 gap-y-4 py-2 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Tag className="size-4" />
@@ -248,7 +244,6 @@ export function NoteEditor({
             )}
           </div>
 
-          {/* Content */}
           <div className="border-t border-border pt-4 xl:mt-1">
           <RichTextEditor
             value={content}
@@ -260,7 +255,6 @@ export function NoteEditor({
         </div>
       </div>
 
-      {/* Footer */}
       <div className="mx-3 flex items-center gap-4 border-t border-border px-0 py-4 md:mx-5 xl:mx-6">
         <Button className="h-10 px-4" onClick={handleSave}>
           Save Note
@@ -283,8 +277,8 @@ export function NoteEditor({
               {note.archived ? "Unarchive Note" : "Archive Note"}
             </Button>
             <Button
-              variant="outline"
-              className="h-11 justify-start gap-3 rounded-md border-red-200 bg-red-50 px-4 text-base font-normal text-red-700 hover:!bg-red-100 hover:!text-red-800 hover:[&_svg]:!text-red-800"
+              variant="destructive"
+              className="h-11 justify-start gap-3 rounded-md px-4 text-base font-normal"
               onClick={() => setShowDeleteDialog(true)}
             >
               <Trash2 className="size-4" />
@@ -294,7 +288,6 @@ export function NoteEditor({
         )}
       </aside>
 
-      {/* Delete confirmation dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>

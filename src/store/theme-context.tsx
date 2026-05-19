@@ -3,6 +3,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useMemo,
   type ReactNode,
 } from "react";
 import type { ColorTheme, FontTheme } from "@/types";
@@ -21,7 +22,7 @@ function loadTheme<K extends string>(key: string, fallback: K): K {
     const stored = localStorage.getItem(key);
     if (stored) return stored as K;
   } catch {
-    /* ignore */
+    return fallback;
   }
   return fallback;
 }
@@ -113,8 +114,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     );
   }, [font]);
 
+  const value = useMemo(
+    () => ({ color, setColor, font, setFont }),
+    [color, font],
+  );
+
   return (
-    <ThemeContext.Provider value={{ color, setColor, font, setFont }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

@@ -12,13 +12,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { TAG_COLOR_OPTIONS, TAG_COLOR_VALUES, type ColorTheme } from "@/types";
+import {
+  TAG_COLOR_OPTIONS,
+  TAG_COLOR_VALUES,
+  type ActiveView,
+  type ColorTheme,
+} from "@/types";
 import { tagColorStyle } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
+const sidebarItemClass =
+  "transition-all duration-200 hover:!bg-primary/15 hover:!text-primary hover:[&_svg]:!text-primary";
+const sidebarItemActiveClass = "bg-primary/15 text-primary";
+
 interface SidebarProps {
-  activeView: "all" | "archived";
-  onViewChange: (view: "all" | "archived") => void;
+  activeView: ActiveView;
+  onViewChange: (view: ActiveView) => void;
   selectedTag: string | null;
   onTagSelect: (tag: string | null) => void;
   tags: string[];
@@ -51,17 +60,15 @@ export function Sidebar({
 
   return (
     <>
-    <aside className="flex flex-col h-full bg-sidebar border-r border-border w-[272px] shrink-0 overflow-y-auto">
-      {/* Logo */}
-      <div className="flex h-20 items-center gap-2 px-7">
-        <NotesLogo
-          variant="sidebar"
-          showName={false}
-          className="rounded-md transition-all duration-200 hover:!text-primary [&_.logo-mark]:transition-transform [&_.logo-mark]:duration-200"
-        />
-      </div>
+      <aside className="flex flex-col h-full bg-sidebar border-r border-border w-[272px] shrink-0 overflow-y-auto">
+        <div className="flex h-20 items-center gap-2 px-7">
+          <NotesLogo
+            variant="sidebar"
+            showName={false}
+            className="rounded-md transition-all duration-200 hover:!text-primary [&_.logo-mark]:transition-transform [&_.logo-mark]:duration-200"
+          />
+        </div>
 
-      {/* Navigation */}
       <nav
         className="flex flex-col gap-2 px-7 pb-4"
         role="navigation"
@@ -71,8 +78,9 @@ export function Sidebar({
           variant="ghost"
           size="lg"
           className={cn(
-            "h-10 w-full justify-start gap-3 px-3 text-[15px] transition-all duration-200 hover:!bg-primary/15 hover:!text-primary hover:[&_svg]:!text-primary",
-            activeView === "all" && "bg-primary/15 text-primary",
+            "h-10 w-full justify-start gap-3 px-3 text-[15px]",
+            sidebarItemClass,
+            activeView === "all" && sidebarItemActiveClass,
           )}
           onClick={() => {
             onViewChange("all");
@@ -87,8 +95,9 @@ export function Sidebar({
           variant="ghost"
           size="lg"
           className={cn(
-            "h-10 w-full justify-start gap-3 px-3 text-[15px] transition-all duration-200 hover:!bg-primary/15 hover:!text-primary hover:[&_svg]:!text-primary",
-            activeView === "archived" && "bg-primary/15 text-primary",
+            "h-10 w-full justify-start gap-3 px-3 text-[15px]",
+            sidebarItemClass,
+            activeView === "archived" && sidebarItemActiveClass,
           )}
           onClick={() => {
             onViewChange("archived");
@@ -101,7 +110,6 @@ export function Sidebar({
         </Button>
       </nav>
 
-      {/* Tags */}
       <div className="flex-1 overflow-y-auto">
         <div className="border-t border-border px-7 py-4">
           <div className="relative mb-5 flex items-center justify-between px-2">
@@ -176,8 +184,9 @@ export function Sidebar({
                   variant="ghost"
                   size="lg"
                   className={cn(
-                    "h-9 min-w-0 flex-1 justify-start gap-3 px-3 text-[15px] font-normal transition-all duration-200 hover:!bg-primary/15 hover:!text-primary hover:[&_svg]:!text-primary",
-                    selectedTag === tag && "bg-primary/15 text-primary",
+                    "h-9 min-w-0 flex-1 justify-start gap-3 px-3 text-[15px] font-normal",
+                    sidebarItemClass,
+                    selectedTag === tag && sidebarItemActiveClass,
                   )}
                   onClick={() => {
                     onTagSelect(selectedTag === tag ? null : tag);
@@ -207,33 +216,40 @@ export function Sidebar({
           </div>
         </div>
       </div>
-    </aside>
-    <Dialog open={tagToDelete !== null} onOpenChange={() => setTagToDelete(null)}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete Tag</DialogTitle>
-          <DialogDescription>
-            Delete "{tagToDelete}" permanently? This will remove it from every
-            note that uses it.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" size="sm" onClick={() => setTagToDelete(null)}>
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              if (tagToDelete) onDeleteTag(tagToDelete);
-              setTagToDelete(null);
-            }}
-          >
-            Delete
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </aside>
+      <Dialog
+        open={tagToDelete !== null}
+        onOpenChange={() => setTagToDelete(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Tag</DialogTitle>
+            <DialogDescription>
+              Delete "{tagToDelete}" permanently? This will remove it from every
+              note that uses it.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTagToDelete(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                if (tagToDelete) onDeleteTag(tagToDelete);
+                setTagToDelete(null);
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

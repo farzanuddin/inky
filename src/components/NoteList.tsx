@@ -11,6 +11,7 @@ interface NoteListProps {
   onCreateNew: () => void;
   searchQuery: string;
   tagColors: Record<string, ColorTheme>;
+  emptyMessage: string;
 }
 
 export function NoteList({
@@ -20,17 +21,16 @@ export function NoteList({
   onCreateNew,
   searchQuery,
   tagColors,
+  emptyMessage,
 }: NoteListProps) {
   return (
     <div className="flex h-full w-[290px] shrink-0 flex-col border-r border-border bg-background">
-      {/* Header */}
-      <div className="px-8 pb-4 pt-5">
-        <Button className="h-10 w-full text-sm" onClick={onCreateNew}>
+      <div className="px-6 py-5">
+        <Button className="h-9 w-full text-sm" onClick={onCreateNew}>
           + Create New Note
         </Button>
       </div>
 
-      {/* Notes list */}
       <div
         className="flex-1 overflow-y-auto"
         role="list"
@@ -38,9 +38,7 @@ export function NoteList({
       >
         {notes.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8 px-4">
-            {searchQuery
-              ? "No notes match your search."
-              : "No notes yet. Create your first note!"}
+            {searchQuery ? "No notes match your search." : emptyMessage}
           </p>
         ) : (
           notes.map((note) => (
@@ -48,7 +46,7 @@ export function NoteList({
               key={note.id}
               role="listitem"
               aria-current={selectedNoteId === note.id ? "true" : undefined}
-              className={`mx-8 w-[calc(100%-4rem)] text-left border-b border-border px-2 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
+              className={`mx-6 w-[calc(100%-3rem)] text-left border-b border-border px-2 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
                 selectedNoteId === note.id
                   ? "rounded bg-primary/10"
                   : "hover:bg-muted/50 focus-visible:bg-muted/50"

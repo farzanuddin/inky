@@ -11,7 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { filterNotes } from "@/lib/filter-notes";
 import { tagColorStyle } from "@/lib/tag-colors";
-import { Search, X, Menu } from "lucide-react";
+import { Search, X } from "lucide-react";
+
+const isMobileLayout = () =>
+  typeof window !== "undefined" &&
+  !window.matchMedia("(min-width: 1280px)").matches;
 
 function NotesApp() {
   const {
@@ -34,23 +38,22 @@ function NotesApp() {
 
   // Mobile state
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [mobileSidebarMode, setMobileSidebarMode] = useState<"nav" | "tags">(
-    "nav",
-  );
+  const [mobileSidebarMode, setMobileSidebarMode] = useState<
+    "nav" | "tags" | "settings"
+  >("nav");
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   const filteredNotes = useMemo(() => {
     return filterNotes(notes, { activeView, selectedTag, searchQuery });
   }, [notes, activeView, selectedTag, searchQuery]);
 
-  const effectiveSelectedNoteId =
-    selectedNoteId ?? filteredNotes[0]?.id ?? null;
+  const desktopSelectedNoteId = selectedNoteId ?? filteredNotes[0]?.id ?? null;
 
   const selectedNote = useMemo(() => {
     if (isCreating) return null;
-    if (!effectiveSelectedNoteId) return null;
-    return notes.find((n) => n.id === effectiveSelectedNoteId) ?? null;
-  }, [notes, effectiveSelectedNoteId, isCreating]);
+    if (!selectedNoteId) return null;
+    return notes.find((n) => n.id === selectedNoteId) ?? null;
+  }, [notes, selectedNoteId, isCreating]);
 
   const handleCreateNew = useCallback(() => {
     setSelectedNoteId(null);
@@ -66,43 +69,45 @@ function NotesApp() {
     (data: { title: string; content: string; tags: string[] }) => {
       const note = createNote(data);
       setIsCreating(false);
-      setSelectedNoteId(note.id);
+      setSelectedNoteId(isMobileLayout() ? null : note.id);
     },
     [createNote],
   );
 
   const handleUpdate = useCallback(
     (data: { title: string; content: string; tags: string[] }) => {
-      if (effectiveSelectedNoteId) {
-        updateNote(effectiveSelectedNoteId, data);
+      if (selectedNoteId) {
+        updateNote(selectedNoteId, data);
+        if (isMobileLayout()) {
+          setSelectedNoteId(null);
+        }
       }
     },
-    [effectiveSelectedNoteId, updateNote],
+    [selectedNoteId, updateNote],
   );
 
   const handleCancel = useCallback(() => {
-    if (isCreating) {
-      setIsCreating(false);
-      if (filteredNotes.length > 0) {
-        setSelectedNoteId(filteredNotes[0].id);
-      }
-    } else {
-      setSelectedNoteId(null);
-    }
-  }, [isCreating, filteredNotes]);
+    setIsCreating(false);
+    setSelectedNoteId(null);
+  }, []);
 
   const handleDelete = useCallback(
     (id: string) => {
       deleteNote(id);
-      if (effectiveSelectedNoteId === id) {
+      if (selectedNoteId === id) {
         setSelectedNoteId(null);
         setIsCreating(false);
       }
     },
-    [deleteNote, effectiveSelectedNoteId],
+    [deleteNote, selectedNoteId],
   );
 
-  const showEditor = isCreating || effectiveSelectedNoteId !== null;
+  const showEditor = isCreating || selectedNoteId !== null;
+  const desktopEditorNote =
+    selectedNote ??
+    (isCreating
+      ? null
+      : notes.find((note) => note.id === desktopSelectedNoteId) ?? null);
 
   return (
     <div
@@ -146,18 +151,6 @@ function NotesApp() {
         mode={mobileSidebarMode}
       />
 
-      {/* Desktop Note List */}
-      <div className="hidden xl:block">
-        <NoteList
-          notes={filteredNotes}
-          selectedNoteId={effectiveSelectedNoteId}
-          onSelectNote={handleSelectNote}
-          onCreateNew={handleCreateNew}
-          searchQuery={searchQuery}
-          tagColors={tagColors}
-        />
-      </div>
-
       {/* Mobile/Tablet Note List (shown when no editor is open) */}
       <div
         className={`xl:hidden flex-col flex-1 min-w-0 ${
@@ -166,21 +159,9 @@ function NotesApp() {
       >
         {/* Mobile/Tablet list header */}
         <div className="flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 border-b border-border bg-background">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => {
-              setMobileSidebarMode("nav");
-              setMobileSidebarOpen(true);
-            }}
-            aria-label="Open menu"
-          >
-            <Menu className="size-4" />
-          </Button>
-          <h1 className="text-sm md:text-base font-semibold text-foreground flex-1">
+          <h1 className="min-w-0 flex-1 text-sm font-semibold text-foreground">
             {activeView === "archived" ? "Archived Notes" : "All Notes"}
           </h1>
-          <ThemeSelector />
         </div>
 
         {/* Mobile search bar (collapsible) */}
@@ -219,13 +200,6 @@ function NotesApp() {
 
         {/* Mobile/Tablet note list content */}
         <div className="flex-1 overflow-y-auto pb-12 md:pb-14">
-          {/* Create button */}
-          <div className="px-3 md:px-4 py-2 md:py-3">
-            <Button className="w-full" size="sm" onClick={handleCreateNew}>
-              + Create New Note
-            </Button>
-          </div>
-
           {filteredNotes.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8 px-4">
               {searchQuery
@@ -278,9 +252,21 @@ function NotesApp() {
         }`}
       >
         <div className="hidden h-20 items-center gap-6 border-b border-border bg-background px-8 xl:flex">
-          <h1 className="min-w-[220px] text-2xl font-bold text-foreground">
-            {activeView === "archived" ? "Archived Notes" : "All Notes"}
-          </h1>
+          <div className="min-w-[220px]">
+            <h1 className="text-2xl font-bold text-foreground">
+              {searchQuery
+                ? `Search: "${searchQuery}"`
+                : activeView === "archived"
+                  ? "Archived Notes"
+                  : "All Notes"}
+            </h1>
+            {searchQuery && (
+              <p className="mt-0.5 text-xs font-medium text-muted-foreground">
+                Searching in{" "}
+                {activeView === "archived" ? "Archived Notes" : "All Notes"}
+              </p>
+            )}
+          </div>
           <div className="flex-1" />
           <div className="relative w-[300px]">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
@@ -307,12 +293,27 @@ function NotesApp() {
         </div>
 
         <div className="flex flex-1 overflow-hidden pb-12 md:pb-14 xl:pb-0">
+          <div className="hidden xl:block">
+            <NoteList
+              notes={filteredNotes}
+              selectedNoteId={desktopSelectedNoteId}
+              onSelectNote={handleSelectNote}
+              onCreateNew={handleCreateNew}
+              searchQuery={searchQuery}
+              tagColors={tagColors}
+              emptyMessage={
+                activeView === "archived"
+                  ? "No archived notes."
+                  : "No notes yet. Create your first note!"
+              }
+            />
+          </div>
           {showEditor ? (
             <NoteEditor
               key={
                 isCreating
                   ? "new"
-                  : `${effectiveSelectedNoteId}-${selectedNote?.updatedAt ?? ""}`
+                  : `${selectedNoteId}-${selectedNote?.updatedAt ?? ""}`
               }
               note={selectedNote}
               onSave={isCreating ? handleSaveNew : handleUpdate}
@@ -325,6 +326,17 @@ function NotesApp() {
                 setSelectedNoteId(null);
                 setIsCreating(false);
               }}
+            />
+          ) : desktopEditorNote ? (
+            <NoteEditor
+              key={`${desktopSelectedNoteId}-${desktopEditorNote.updatedAt}`}
+              note={desktopEditorNote}
+              onSave={(data) => updateNote(desktopEditorNote.id, data)}
+              onDelete={handleDelete}
+              onArchive={toggleArchive}
+              onCancel={() => setSelectedNoteId(null)}
+              availableTags={tags}
+              tagColors={tagColors}
             />
           ) : (
             <div className="hidden h-full flex-1 items-center justify-center text-muted-foreground xl:flex">
@@ -350,13 +362,14 @@ function NotesApp() {
           setSelectedNoteId(null);
           setIsCreating(false);
         }}
-        onOpenSearch={() => setMobileSearchOpen(true)}
+        onOpenSearch={() => setMobileSearchOpen((open) => !open)}
+        onCreateNote={handleCreateNew}
         onOpenTags={() => {
           setMobileSidebarMode("tags");
           setMobileSidebarOpen(true);
         }}
         onOpenSettings={() => {
-          setMobileSidebarMode("nav");
+          setMobileSidebarMode("settings");
           setMobileSidebarOpen(true);
         }}
       />

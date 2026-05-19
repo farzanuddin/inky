@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { Home, Search, Archive, Tags, Settings } from "lucide-react";
+import { Home, Search, Archive, Tags, Settings, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MobileBottomNavProps {
   activeView: "all" | "archived";
   onViewChange: (view: "all" | "archived") => void;
   onOpenSearch: () => void;
+  onCreateNote: () => void;
   onOpenTags: () => void;
   onOpenSettings: () => void;
 }
@@ -14,6 +15,7 @@ export function MobileBottomNav({
   activeView,
   onViewChange,
   onOpenSearch,
+  onCreateNote,
   onOpenTags,
   onOpenSettings,
 }: MobileBottomNavProps) {
@@ -41,16 +43,6 @@ export function MobileBottomNav({
         <Button
           variant="ghost"
           size="icon-sm"
-          className="size-10 rounded-lg"
-          onClick={onOpenSearch}
-          aria-label="Search"
-        >
-          <Search className="size-5" />
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="icon-sm"
           className={cn(
             "size-10 rounded-lg",
             activeView === "archived" && "text-primary bg-accent",
@@ -59,6 +51,16 @@ export function MobileBottomNav({
           aria-label="Archived"
         >
           <Archive className="size-5" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="size-10 rounded-lg"
+          onClick={onOpenSearch}
+          aria-label="Search"
+        >
+          <Search className="size-5" />
         </Button>
 
         <Button
@@ -79,6 +81,15 @@ export function MobileBottomNav({
           aria-label="Settings"
         >
           <Settings className="size-5" />
+        </Button>
+
+        <Button
+          size="icon-sm"
+          className="h-10 min-w-12 rounded-lg bg-primary px-3 text-primary-foreground hover:bg-primary/90"
+          onClick={onCreateNote}
+          aria-label="Create note"
+        >
+          <Plus className="size-5" />
         </Button>
       </div>
 
@@ -101,17 +112,6 @@ export function MobileBottomNav({
         <Button
           variant="ghost"
           size="sm"
-          className="flex-col gap-0.5 h-auto py-1 px-3 text-[10px] font-normal"
-          onClick={onOpenSearch}
-          aria-label="Search"
-        >
-          <Search className="size-5" />
-          Search
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="sm"
           className={cn(
             "flex-col gap-0.5 h-auto py-1 px-3 text-[10px] font-normal",
             activeView === "archived" && "text-primary",
@@ -121,6 +121,17 @@ export function MobileBottomNav({
         >
           <Archive className="size-5" />
           Archived
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex-col gap-0.5 h-auto py-1 px-3 text-[10px] font-normal"
+          onClick={onOpenSearch}
+          aria-label="Search"
+        >
+          <Search className="size-5" />
+          Search
         </Button>
 
         <Button
@@ -143,6 +154,16 @@ export function MobileBottomNav({
         >
           <Settings className="size-5" />
           Settings
+        </Button>
+
+        <Button
+          size="sm"
+          className="h-11 min-w-14 flex-col gap-0.5 rounded-lg bg-primary px-3 py-1 text-[10px] font-normal text-primary-foreground hover:bg-primary/90"
+          onClick={onCreateNote}
+          aria-label="Create note"
+        >
+          <Plus className="size-5" />
+          New
         </Button>
       </div>
     </nav>

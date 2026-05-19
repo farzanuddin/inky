@@ -72,9 +72,7 @@ export function Sidebar({
           size="lg"
           className={cn(
             "h-10 w-full justify-start gap-3 px-3 text-[15px] transition-all duration-200 hover:!bg-primary/15 hover:!text-primary hover:[&_svg]:!text-primary",
-            activeView === "all" &&
-              !selectedTag &&
-              "bg-primary/15 text-primary",
+            activeView === "all" && "bg-primary/15 text-primary",
           )}
           onClick={() => {
             onViewChange("all");
